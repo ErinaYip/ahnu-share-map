@@ -24,7 +24,7 @@ import {
   signOutAdmin,
   updatePlace,
   uploadPublishedImages,
-} from "../lib/supabase";
+} from "../lib/api";
 import ImageLightbox from "./ImageLightbox";
 
 const blankCategory = () => ({
@@ -825,9 +825,9 @@ export default function AdminPanel({
       ) : !user ? (
         <div className="debug-form">
           <label>
-            <span>管理员邮箱</span>
+            <span>管理员账号</span>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />

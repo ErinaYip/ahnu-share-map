@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   createApprovedPlaceWithImages,
   submitPlaceWithImages,
-} from "../lib/supabase";
+} from "../lib/api";
 import Turnstile from "./Turnstile";
 
 const yamlValue = (value) => `'${String(value).replaceAll("'", "''")}'`;

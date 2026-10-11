@@ -21,8 +21,8 @@ import {
   mapDynamicPlace,
   restoreAdminSession,
   submitPlace,
-  supabaseConfigured,
-} from "./lib/supabase";
+  backendConfigured,
+} from "./lib/api";
 import SubmissionForm from "./components/SubmissionForm";
 import SubmissionStatus from "./components/SubmissionStatus";
 import AdminPanel from "./components/AdminPanel";
@@ -903,7 +903,7 @@ function App() {
   }, [activePage]);
 
   useEffect(() => {
-    if (!supabaseConfigured) return undefined;
+    if (!backendConfigured) return undefined;
     let cancelled = false;
     restoreAdminSession()
       .then((admin) => (admin ? loadPlacesByStatus("pending") : []))
@@ -946,7 +946,7 @@ function App() {
     setGuideOpen(false);
   };
   const refreshCatalog = useCallback(async () => {
-    if (!supabaseConfigured) return;
+    if (!backendConfigured) return;
     try {
       const catalog = await loadDynamicCatalog();
       const nextCategories = (catalog.categories || []).map((category) => ({
@@ -1181,9 +1181,9 @@ function App() {
         onContactOpen={() => setContactOpen(true)}
       >
         {activePage === "map" ? <>
-          {supabaseConfigured && <button className="utility-trigger" onClick={() => { setStatusPanel(true); setAdminPanel(false); setDraft(null); }}>查投稿</button>}
-          {((supabaseConfigured && appConfig.enablePublicSubmissions) || (!supabaseConfigured && appConfig.enableDebugAddPoint)) && (
-            <button className={`debug-trigger ${debugEnabled ? "active" : ""}`} onClick={() => { setDebugEnabled((value) => !value); setDraft(null); }}>＋<span>{debugEnabled ? "取消加点" : supabaseConfigured ? "投稿地点" : "调试录点"}</span></button>
+          {backendConfigured && <button className="utility-trigger" onClick={() => { setStatusPanel(true); setAdminPanel(false); setDraft(null); }}>查投稿</button>}
+          {((backendConfigured && appConfig.enablePublicSubmissions) || (!backendConfigured && appConfig.enableDebugAddPoint)) && (
+            <button className={`debug-trigger ${debugEnabled ? "active" : ""}`} onClick={() => { setDebugEnabled((value) => !value); setDraft(null); }}>＋<span>{debugEnabled ? "取消加点" : backendConfigured ? "投稿地点" : "调试录点"}</span></button>
           )}
           <button className="drawer-trigger" onClick={() => { setDrawer(true); setSelected(null); setDraft(null); }}><span className="trigger-icon">☷</span>推荐地点 <b>{filtered.length}</b></button>
         </> : <>
@@ -1291,7 +1291,7 @@ function App() {
         />
       )}
       {draft &&
-        (supabaseConfigured ? (
+        (backendConfigured ? (
           <SubmissionForm
             draft={draft}
             setDraft={setDraft}
