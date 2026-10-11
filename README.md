@@ -12,6 +12,8 @@
 4. `public/logo.png`：站点 Logo（文件名由 `brand.yml` 的 `logo` 字段指定）。
 5. 部署配置：`api/notify-admins.js` 的邮件标题使用 `SITE_NAME` 环境变量；`supabase/functions/submit-place/index.ts` 的 `ALLOWED_ORIGINS`、`TURNSTILE_ALLOWED_HOSTNAMES` 默认值（建议用 secrets 覆盖）。
 
+本分支（`feat/nbut-white-label`）已配置为宁波工程学院部署示例：站名「宁工生活地图」（NBUT · LIFE MAP），口号「学长学姐分享」，校区为风华、翠柏、杭州湾，地图中心为风华校区。品牌只改动 `src/data/brand.yml`，`index.html` 的标题与分享卡片会在构建时自动生成；部署前请替换 `url` 与联系方式，并替换 `public/logo.png`。
+
 ## 本地配置
 
 复制 `.env.example` 为 `.env`，填写高德、Supabase 和 Turnstile 的前端变量。
@@ -59,8 +61,8 @@ select id, null from auth.users where email = '管理员登录邮箱';
 SMTP_PORT=465
 SMTP_USER=你的QQ邮箱
 SMTP_PASS=QQ邮箱SMTP授权码
-SMTP_FROM=AHNU Share Map
-SITE_NAME=安师生活地图
+SMTP_FROM=NBUT Share Map
+SITE_NAME=宁工生活地图
 ADMIN_NOTIFICATION_SECRET=随机长密钥
 ```
 
