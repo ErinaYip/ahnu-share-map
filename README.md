@@ -2,6 +2,16 @@
 
 本项目采用 [GNU GPLv3](./LICENSE) 开源许可证。
 
+## 白标配置（White label）
+
+同一套代码可服务多所学校 / 组织。品牌信息集中在 `src/data/brand.yml`，切换学校只需改配置，无需改动业务代码。`index.html` 的标题与分享卡片（Open Graph / Twitter）由 Vite 在构建时根据 `brand.yml` 自动注入，无需手动修改。
+
+1. `src/data/brand.yml`（品牌唯一数据源）：站名、英文标语、机构名、口号、页面描述、分享描述、站点 URL、Logo 路径、引导标题、口碑标签、联系方式和 `storageKey`。`storageKey` 是浏览器本地存储前缀，默认沿用项目名 `ahnu-share-map`；若多个白标部署在同一个域名下，请改为不同值以避免互相覆盖。
+2. `src/data/campuses.yml`：校区名称与坐标（坐标遵循 `app.yml` 的 `coordinateSystem`）。
+3. `src/data/app.yml`：默认地图中心与缩放级别。
+4. `public/logo.png`：站点 Logo（文件名由 `brand.yml` 的 `logo` 字段指定）。
+5. 部署配置：`api/notify-admins.js` 的邮件标题使用 `SITE_NAME` 环境变量；`supabase/functions/submit-place/index.ts` 的 `ALLOWED_ORIGINS`、`TURNSTILE_ALLOWED_HOSTNAMES` 默认值（建议用 secrets 覆盖）。
+
 ## 本地配置
 
 复制 `.env.example` 为 `.env`，填写高德、Supabase 和 Turnstile 的前端变量。
@@ -50,6 +60,7 @@ SMTP_PORT=465
 SMTP_USER=你的QQ邮箱
 SMTP_PASS=QQ邮箱SMTP授权码
 SMTP_FROM=AHNU Share Map
+SITE_NAME=安师生活地图
 ADMIN_NOTIFICATION_SECRET=随机长密钥
 ```
 

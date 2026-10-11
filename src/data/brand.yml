@@ -1,0 +1,25 @@
+# 白标（White label）配置文件。
+# 品牌信息的唯一数据源：页面文案与 index.html 的标题、分享卡片都由本文件生成。
+- name: 安师生活地图
+  shortName: 安师
+  englishName: AHNU · LIFE MAP
+  institution: 安徽师范大学
+  slogan: 学长分享
+  description: 安徽师范大学校园生活、美食与娱乐推荐地图。
+  shareDescription: 发现安徽师范大学校园内外值得去的美食与娱乐地点。
+  url: https://map.florance.top/
+  logo: logo.png
+  guideTitle: 三步开始逛安师
+  quoteLabel: 学长说
+  # 浏览器本地存储前缀，默认沿用项目名；多个白标部署在同一域名下时请改为不同值。
+  storageKey: ahnu-share-map
+  # 联系方式；留空则对应条目自动隐藏。
+  contactQqLabel: QQ
+  contactQqValue: 3393314989
+  contactQqHref: https://qm.qq.com/q/RpYQ0TADOW
+  contactSiteLabel: 个人主页
+  contactSiteValue: Florance.top ↗
+  contactSiteHref: https://florance.top
+  contactGithubLabel: GitHub
+  contactGithubValue: FloranceYeh ↗
+  contactGithubHref: https://github.com/floranceyeh

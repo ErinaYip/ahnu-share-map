@@ -57,6 +57,7 @@ export default async function handler(request, response) {
   if (!smtpUser || !smtpPass)
     return response.status(503).json({ error: "SMTP 服务尚未配置" });
 
+  const siteName = stringValue(process.env.SITE_NAME, 80) || "生活地图";
   const submission =
     body.submission && typeof body.submission === "object"
       ? body.submission
@@ -132,7 +133,7 @@ export default async function handler(request, response) {
       from,
       envelope: { from: smtpUser, to: recipients },
       to: recipients,
-      subject: `【安师生活地图】新投稿待审核：${name.replace(/[\r\n]/g, " ")}`,
+      subject: `【${siteName}】新投稿待审核：${name.replace(/[\r\n]/g, " ")}`,
       text: mailText,
       html: mailHtml,
     });

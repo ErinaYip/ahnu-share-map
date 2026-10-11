@@ -8,9 +8,11 @@ import React, {
 import { createRoot } from "react-dom/client";
 import categoryYamlText from "./data/categories.yml?raw";
 import appYamlText from "./data/app.yml?raw";
+import brandYamlText from "./data/brand.yml?raw";
 import campusYamlText from "./data/campuses.yml?raw";
 import detailYamlText from "./data/details.yml?raw";
 import reactionYamlText from "./data/reactions.yml?raw";
+import { parseYaml, createBrand } from "./lib/brand";
 import {
   defaultRecommendationSortSettings,
   getSubmissionStatus,
@@ -29,52 +31,11 @@ import PlaceReactions from "./components/PlaceReactions";
 import RecommendationDrawer from "./components/RecommendationDrawer";
 import "./styles.css";
 
-function parseScalar(value) {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-  )
-    return trimmed.slice(1, -1);
-  if (trimmed.startsWith("[") && trimmed.endsWith("]"))
-    return trimmed
-      .slice(1, -1)
-      .split(",")
-      .map((item) => {
-        const token = item.trim().replace(/^['"]|['"]$/g, "");
-        return /^\d+(\.\d+)?$/.test(token) ? Number(token) : token;
-      })
-      .filter(Boolean);
-  if (trimmed === "true") return true;
-  if (trimmed === "false") return false;
-  if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
-  return trimmed;
-}
-
-function parseYaml(text) {
-  const rows = [];
-  let current = null;
-  text.split(/\r?\n/).forEach((line) => {
-    const clean = line.trim();
-    if (!clean || clean.startsWith("#")) return;
-    if (clean.startsWith("- ")) {
-      if (current) rows.push(current);
-      current = {};
-      const first = clean.slice(2).match(/^([^:]+):\s*(.*)$/);
-      if (first) current[first[1].trim()] = parseScalar(first[2]);
-      return;
-    }
-    const match = clean.match(/^([^:]+):\s*(.*)$/);
-    if (match && current) current[match[1].trim()] = parseScalar(match[2]);
-  });
-  if (current) rows.push(current);
-  return rows;
-}
-
 const appConfig = parseYaml(appYamlText)[0];
 if (!appConfig)
   throw new Error("src/data/app.yml must contain one configuration item");
+const brand = createBrand(parseYaml(brandYamlText)[0]);
+const guideSeenStorageKey = `${brand.storageKey}-guide-seen`;
 const PI = Math.PI;
 const AXIS = 6378245.0;
 const EE = 0.00669342162296594323;
@@ -164,7 +125,7 @@ const CAMPUSES = parseYaml(campusYamlText)
 if (!CAMPUSES.length)
   throw new Error("src/data/campuses.yml must contain at least one campus");
 const DEFAULT_CAMPUS_ID = CAMPUSES[0].id;
-const ACTIVE_CAMPUS_STORAGE_KEY = "ahnu-share-map-active-campus";
+const ACTIVE_CAMPUS_STORAGE_KEY = `${brand.storageKey}-active-campus`;
 
 function getInitialCampusId() {
   try {
@@ -556,8 +517,8 @@ function SiteHeader({
       >
         <img className="brand-mark" src="/logo.png" alt="" draggable="false" />
         <div className="brand-copy">
-          <p className="eyebrow">AHNU · LIFE MAP</p>
-          <strong>安师生活地图</strong>
+          <p className="eyebrow">{brand.englishName}</p>
+          <strong>{brand.name}</strong>
         </div>
       </a>
       <nav className="main-navigation" aria-label="主菜单">
@@ -625,8 +586,8 @@ function ControlPreview({ type }) {
   if (type === "campus")
     return (
       <span className="control-campus">
-        <strong>赭山校区</strong>
-        <small>点我切换至花津校区</small>
+        <strong>{CAMPUSES[0].name}</strong>
+        <small>点我切换至{CAMPUSES[1]?.name || CAMPUSES[0].name}</small>
       </span>
     );
   if (type === "submit")
@@ -644,7 +605,7 @@ function ControlPreview({ type }) {
   if (type === "place")
     return (
       <span className="control-place">
-        <span><b>镜湖边小店</b><small>赭山校区东门</small></span>
+        <span><b>校门口小店</b><small>{CAMPUSES[0].name}东门</small></span>
         <i>↗</i>
       </span>
     );
@@ -671,10 +632,10 @@ function DetailPage({ onNavigate }) {
       <section className="detail-intro">
         <div className="detail-title">
           <p className="section-kicker">MAP CONTROLS</p>
-          <h1>安师生活地图</h1>
+          <h1>{brand.name}</h1>
           <p>详细功能介绍</p>
         </div>
-        <img src="/logo.png" alt="安师生活地图 Logo" />
+        <img src="/logo.png" alt={`${brand.name} Logo`} />
       </section>
       <section className="detail-section">
         <div className="detail-section-heading">
@@ -712,7 +673,7 @@ function DetailPage({ onNavigate }) {
           </div>
           <div>
             <ControlPreview type="campus" />
-            <p>点击左下角校区按钮，在赭山校区与花津校区之间切换，并把地图重置到对应校区中心。</p>
+            <p>点击左下角校区按钮，{CAMPUSES.length > 1 ? `在${CAMPUSES.map((campus) => campus.name).join("、")}之间切换，` : ""}并把地图重置到对应校区中心。</p>
           </div>
         </div>
       </section>
@@ -935,10 +896,10 @@ function App() {
 
   useEffect(() => {
     document.title = activePage === "detail"
-      ? "详细介绍 · 安师生活地图"
+      ? `详细介绍 · ${brand.name}`
       : activePage === "admin"
-        ? "管理后台 · 安师生活地图"
-        : "安师生活地图 · 学长分享";
+        ? `管理后台 · ${brand.name}`
+        : `${brand.name} · ${brand.slogan}`;
   }, [activePage]);
 
   useEffect(() => {
@@ -966,14 +927,14 @@ function App() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [contactOpen]);
   useEffect(() => {
-    if (window.localStorage.getItem("zheshan-map-guide-seen") !== "1")
+    if (window.localStorage.getItem(guideSeenStorageKey) !== "1")
       setGuideOpen(true);
   }, []);
   useEffect(() => {
     if (!guideOpen) return undefined;
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
-        window.localStorage.setItem("zheshan-map-guide-seen", "1");
+        window.localStorage.setItem(guideSeenStorageKey, "1");
         setGuideOpen(false);
       }
     };
@@ -981,7 +942,7 @@ function App() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [guideOpen]);
   const closeGuide = () => {
-    window.localStorage.setItem("zheshan-map-guide-seen", "1");
+    window.localStorage.setItem(guideSeenStorageKey, "1");
     setGuideOpen(false);
   };
   const refreshCatalog = useCallback(async () => {
@@ -1174,11 +1135,11 @@ function App() {
       },
       {
         label: "腾讯",
-        href: `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${destinationName}&tocoord=${gcjLatitude},${gcjLongitude}&referer=ahnu-share-map`,
+        href: `https://apis.map.qq.com/uri/v1/routeplan?type=drive&to=${destinationName}&tocoord=${gcjLatitude},${gcjLongitude}&referer=${brand.storageKey}`,
       },
       {
         label: "百度",
-        href: `https://api.map.baidu.com/direction?destination=${gcjLatitude},${gcjLongitude}&mode=driving&output=html&coord_type=gcj02&src=ahnu-share-map`,
+        href: `https://api.map.baidu.com/direction?destination=${gcjLatitude},${gcjLongitude}&mode=driving&output=html&coord_type=gcj02&src=${brand.storageKey}`,
       },
       {
         label: "苹果",
@@ -1460,7 +1421,7 @@ function App() {
             <div className="senior-note">
               <div className="avatar">学</div>
               <div>
-                <span className="note-label">学长说</span>
+                <span className="note-label">{brand.quoteLabel}</span>
                 <p>{selected.recommendation}</p>
               </div>
             </div>
@@ -1532,24 +1493,30 @@ function App() {
             </button>
             <p className="section-kicker">CONTACT</p>
             <h2 id="author-dialog-title">联系作者</h2>
-            <div className="author-detail">
-              <span>QQ</span>
-              <strong><a href="https://qm.qq.com/q/RpYQ0TADOW " target="_blank" rel="noreferrer">
-                3393314989
-              </a></strong>
-            </div>
-            <div className="author-detail">
-              <span>个人主页</span>
-              <a href="https://florance.top" target="_blank" rel="noreferrer">
-                Florance.top ↗
-              </a>
-            </div>
-            <div className="author-detail">
-              <span>GitHub</span>
-              <a href="https://github.com/floranceyeh" target="_blank" rel="noreferrer">
-                FloranceYeh ↗
-              </a>
-            </div>
+            {brand.contactQqValue && (
+              <div className="author-detail">
+                <span>{brand.contactQqLabel}</span>
+                <strong><a href={brand.contactQqHref || "#"} target="_blank" rel="noreferrer">
+                  {brand.contactQqValue}
+                </a></strong>
+              </div>
+            )}
+            {brand.contactSiteValue && (
+              <div className="author-detail">
+                <span>{brand.contactSiteLabel}</span>
+                <a href={brand.contactSiteHref || "#"} target="_blank" rel="noreferrer">
+                  {brand.contactSiteValue}
+                </a>
+              </div>
+            )}
+            {brand.contactGithubValue && (
+              <div className="author-detail">
+                <span>{brand.contactGithubLabel}</span>
+                <a href={brand.contactGithubHref || "#"} target="_blank" rel="noreferrer">
+                  {brand.contactGithubValue}
+                </a>
+              </div>
+            )}
           </section>
         </div>
       )}
@@ -1574,7 +1541,7 @@ function App() {
               ×
             </button>
             <p className="section-kicker">QUICK START</p>
-            <h2 id="guide-dialog-title">三步开始逛安师</h2>
+            <h2 id="guide-dialog-title">{brand.guideTitle}</h2>
             <ol className="guide-steps">
               <li>
                 <b>1</b>
@@ -1587,7 +1554,7 @@ function App() {
                 <b>2</b>
                 <div>
                   <strong>打开推荐</strong>
-                  <span>点击地图圆点，查看学长分享的具体理由和详情。</span>
+                  <span>点击地图圆点，查看{brand.quoteLabel}的具体理由和详情。</span>
                 </div>
               </li>
               <li>
