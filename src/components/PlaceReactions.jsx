@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { loadPlaceReactions, setPlaceReaction } from "../lib/supabase";
+import { loadPlaceReactions, setPlaceReaction } from "../lib/api";
 
 const emptySummary = (reactions = []) =>
   Object.fromEntries(
