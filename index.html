@@ -37,12 +37,29 @@
                 <!-- 待办事项模块 -->
                 <section class="todo-section card">
                     <h2>📝 待办事项</h2>
-                    <div class="todo-input-group">
-                        <input type="text" id="todo-input" placeholder="添加新任务，按回车键保存...">
-                        <button id="add-todo-btn">添加</button>
-                    </div>
+                    <form class="todo-input-group" action="/todos/add" method="post">
+                        <input type="text" name="text" id="todo-input" placeholder="添加新任务，按回车键保存..." required>
+                        <button type="submit" id="add-todo-btn">添加</button>
+                    </form>
                     <ul id="todo-list" class="todo-list">
-                        <!-- 待办事项将通过 JS 渲染在这里 -->
+                        {% for todo in todos %}
+                        <li class="todo-item {{ 'completed' if todo.completed else '' }}">
+                            <form action="/todos/toggle" method="post" class="todo-content">
+                                <input type="hidden" name="id" value="{{ todo.id }}">
+                                <button type="submit" class="todo-toggle" aria-label="切换完成">
+                                    <span class="todo-check">{{ '☑' if todo.completed else '☐' }}</span>
+                                    <span class="todo-text">
+                                        {{ todo.text }}
+                                        <small>创建于: {{ todo.createdAt }}{% if todo.completed %} | 完成于: {{ todo.completedAt }}{% endif %}</small>
+                                    </span>
+                                </button>
+                            </form>
+                            <form action="/todos/delete" method="post">
+                                <input type="hidden" name="id" value="{{ todo.id }}">
+                                <button type="submit" class="delete-btn">删除</button>
+                            </form>
+                        </li>
+                        {% endfor %}
                     </ul>
                 </section>
 
@@ -114,6 +131,9 @@
         </main>
     </div>
 
+    <script>
+        window.__TODOS__ = {{ all_todos | tojson }};
+    </script>
     <script src="app.js"></script>
 </body>
 </html>

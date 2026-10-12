@@ -546,7 +546,7 @@ button:active {
     padding-left: 15px;
     border-bottom-color: transparent;
 }
-.todo-item.completed span {
+.todo-item.completed .todo-text {
     text-decoration: line-through;
     color: var(--text-secondary);
     transition: color 0.3s;
@@ -557,17 +557,30 @@ button:active {
     gap: 10px;
     cursor: pointer;
     transition: transform 0.2s;
+    flex: 1;
+    margin: 0;
 }
+.todo-toggle {
+    background: none;
+    color: var(--text-primary);
+    padding: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    font-size: 1rem;
+}
+.todo-toggle:hover {
+    background: none;
+    transform: none;
+    box-shadow: none;
+}
+.todo-check { font-size: 1.1rem; color: var(--primary-color); }
+.todo-text { display: flex; flex-direction: column; }
+.todo-text small { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
 .todo-item:active .todo-content {
     transform: scale(0.98);
-}
-.todo-content input[type="checkbox"] {
-    accent-color: var(--primary-color);
-    transform: scale(1.1);
-    transition: transform 0.2s;
-}
-.todo-content input[type="checkbox"]:active {
-    transform: scale(0.9);
 }
 .delete-btn {
     background: none;

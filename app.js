@@ -107,139 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchWeather(savedLocation.lat, savedLocation.lon, savedLocation.city);
     }
 
-    // === 3. 待办事项管理 (基于 LocalStorage) ===
-    const todoInput = document.getElementById('todo-input');
-    const addBtn = document.getElementById('add-todo-btn');
-    const todoList = document.getElementById('todo-list');
-
-    let todos = JSON.parse(localStorage.getItem('my_todos')) || [];
-    let isTodoExpanded = false;
-
-    // 辅助函数：获取当天的 YYYY-MM-DD
-    function getTodayString() {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
-
-    // 数据平滑升级：对早期不支持日期的待办数据进行自动补全
-    todos = todos.map(t => {
-        if (!t.createdAt) t.createdAt = getTodayString();
-        if (t.completed && !t.completedAt) t.completedAt = getTodayString();
-        return t;
-    });
-
-    function saveTodos() {
-        localStorage.setItem('my_todos', JSON.stringify(todos));
-    }
-
-    function renderTodos() {
-        todoList.innerHTML = '';
-        const today = getTodayString();
-        
-        // 过滤：已完成且完成日期不在今天的待办将会被隐藏
-        let displayTodos = todos.map((todo, index) => ({ todo, index })) // 保留原始索引以便操作
-                            .filter(item => !item.todo.completed || item.todo.completedAt === today);
-        
-        // 排序：未完成在前，已完成在后
-        displayTodos.sort((a, b) => {
-            if (a.todo.completed === b.todo.completed) return 0;
-            return a.todo.completed ? 1 : -1;
-        });
-
-        // 处理折叠逻辑
-        const limit = isTodoExpanded ? displayTodos.length : 5;
-        const pagedTodos = displayTodos.slice(0, Math.min(limit, displayTodos.length));
-
-        pagedTodos.forEach((item) => {
-            const { todo, index: originalIndex } = item;
-            const li = document.createElement('li');
-            li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-            
-            const datesInfo = `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
-                创建于: ${todo.createdAt}${todo.completed ? ' | 完成于: ' + todo.completedAt : ''}
-            </div>`;
-
-            li.innerHTML = `
-                <div class="todo-content" onclick="toggleTodo(${originalIndex})" style="width: 100%;">
-                    <input type="checkbox" ${todo.completed ? 'checked' : ''} onclick="event.stopPropagation(); toggleTodo(${originalIndex});">
-                    <div style="display: flex; flex-direction: column;">
-                        <span>${todo.text}</span>
-                        ${datesInfo}
-                    </div>
-                </div>
-                <button class="delete-btn" onclick="event.stopPropagation(); deleteTodo(${originalIndex});" style="flex-shrink: 0;">删除</button>
-            `;
-            todoList.appendChild(li);
-        });
-
-        // 渲染折叠/展开按钮
-        const oldToggleBtn = document.getElementById('todo-toggle-btn');
-        if (oldToggleBtn) oldToggleBtn.remove();
-
-        if (displayTodos.length > 5) {
-            const toggleBtn = document.createElement('button');
-            toggleBtn.id = 'todo-toggle-btn';
-            toggleBtn.className = 'icon-btn';
-            toggleBtn.style.width = '100%';
-            toggleBtn.style.padding = '8px';
-            toggleBtn.style.marginTop = '10px';
-            toggleBtn.style.backgroundColor = 'transparent';
-            toggleBtn.style.color = 'var(--text-secondary)';
-            toggleBtn.style.border = '1px dashed var(--border-color)';
-            toggleBtn.style.borderRadius = 'var(--border-radius)';
-            toggleBtn.textContent = isTodoExpanded ? '折叠列表 ▴' : `展开余下 ${displayTodos.length - 5} 项 ▾`;
-            
-            toggleBtn.onclick = () => {
-                isTodoExpanded = !isTodoExpanded;
-                renderTodos();
-            };
-            
-            // 将按钮插入到 todoList 的后面
-            todoList.parentNode.insertBefore(toggleBtn, todoList.nextSibling);
-        }
-        
-        // 当待办状态发生改变时（可能有新日期的待办加入/完成），通知日历重绘。
-        // 使用 setTimeout 以避免在初始加载时触发下面 let 变量未解析的 TDZ 错误。
-        setTimeout(() => {
-            if (typeof renderCalendar === 'function') {
-                renderCalendar();
-            }
-        }, 0);
-    }
-
-    window.toggleTodo = function(index) {
-        todos[index].completed = !todos[index].completed;
-        if (todos[index].completed) {
-            todos[index].completedAt = getTodayString(); // 记录完成时间
-        } else {
-            delete todos[index].completedAt; // 撤销完成时清除时间
-        }
-        saveTodos();
-        renderTodos();
-    };
-
-    window.deleteTodo = function(index) {
-        todos.splice(index, 1);
-        saveTodos();
-        renderTodos();
-    };
-
-    function addTodo() {
-        const text = todoInput.value.trim();
-        if (text) {
-            todos.push({ text, completed: false, createdAt: getTodayString() });
-            todoInput.value = '';
-            saveTodos();
-            renderTodos();
-        }
-    }
-
-    addBtn.addEventListener('click', addTodo);
-    todoInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addTodo();
-    });
-
-    renderTodos();
+    // === 3. 待办事项：由后端模板直接渲染，这里仅保留数据供日历/导出使用 ===
+    const todos = window.__TODOS__ || [];
 
     // === 4. 每日小记 (基于 LocalStorage 自动保存) 与日历交互 ===
     const notesEl = document.getElementById('daily-notes');
@@ -500,9 +369,9 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     }
 
-    // 5.1 导出所有数据为 JSON
+    // 5.1 导出所有数据为 JSON（日记/设置来自本地，待办来自后端注入）
     document.getElementById('export-json-btn').addEventListener('click', () => {
-        const data = {};
+        const data = { todos: window.__TODOS__ || [] };
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             // 过滤掉无关的外部/其它项目字段（如 docsify 字段）
@@ -597,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!confirm('警告：导入备份将完全覆盖当前浏览器里的待办、日记和所有设置！确认继续吗？')) {
+        if (!confirm('警告：导入备份将完全覆盖当前的待办、日记和所有设置！确认继续吗？')) {
             return;
         }
 
@@ -605,15 +474,15 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-                localStorage.clear(); // 清空当前所有缓存
-                
+                delete data.todos; // 待办保存在后端内存，不在此导入
+
+                localStorage.clear(); // 清空当前所有本地缓存
                 for (let key in data) {
                     if (data.hasOwnProperty(key)) {
                         localStorage.setItem(key, data[key]);
                     }
                 }
-                
-                alert('恢复备份成功！页面即将重新加载应用你的新数据。');
+                alert('恢复备份成功！页面即将重新加载。');
                 location.reload();
             } catch (err) {
                 alert('导入失败，文件格式可能已损坏或不是合法的 JSON 文件！');
