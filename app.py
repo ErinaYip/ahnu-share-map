@@ -5,8 +5,7 @@ from flask import Flask, redirect, render_template_string, request
 
 app = Flask(__name__, static_folder=".", static_url_path="")
 
-# 待办事项直接存在进程内存里，重启即清空
-_todos = []          # [{id, text, completed, createdAt, completedAt}]
+_todos = []  # [{id, text, completed, createdAt, completedAt}]
 _next_id = 1
 
 TEMPLATE = Path(__file__).with_name("index.html").read_text(encoding="utf-8")
@@ -33,7 +32,6 @@ def _add(text, completed=False, created=None, completed_at=None):
 @app.get("/")
 def index():
     today = _today()
-    # 已完成且不是今天完成的待办隐藏；未完成的排在前面
     display = [t for t in _todos if not t["completed"] or t.get("completedAt") == today]
     display.sort(key=lambda t: t["completed"])
     return render_template_string(TEMPLATE, todos=display, all_todos=_todos)
